@@ -261,17 +261,21 @@
         const DEFAULT_CONFIG = {
             appId: "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI",
             appKey: "KJF0dXD0lmOMn1PJDb3fMUN5",
-            serverURL: "https://ru4pzaoo.api.lncldglobal.com"
+            serverURLs: "https://ru4pzaoo.api.lncldglobal.com"
         };
 
+        // Global error storage for debugging
+        let lastCloudError = null;
+
         function getCloudConfig() {
-            let config = DEFAULT_TASKS; // fallback placeholder
+            let config = DEFAULT_TASKS;
             const saved = localStorage.getItem('tie_cloud_config');
 
             if (saved) {
                 config = JSON.parse(saved);
-                // AUTO-FIX: If serverURL doesn't match the correct one, force update
-                if (!config.serverURL || !config.serverURL.includes('ru4pzaoo')) {
+                // AUTO-FIX: Check if serverURLs matches the correct one.
+                const currentUrl = config.serverURLs || config.serverURL;
+                if (!currentUrl || !currentUrl.includes('ru4pzaoo')) {
                     console.log("Detected old/wrong config, auto-fixing...");
                     config = DEFAULT_CONFIG;
                     localStorage.setItem('tie_cloud_config', JSON.stringify(DEFAULT_CONFIG));
@@ -287,7 +291,7 @@
             const newCfg = {
                 appId: document.getElementById('cfg-appid').value.trim(),
                 appKey: document.getElementById('cfg-appkey').value.trim(),
-                serverURL: document.getElementById('cfg-server').value.trim()
+                serverURLs: document.getElementById('cfg-server').value.trim()
             };
             localStorage.setItem('tie_cloud_config', JSON.stringify(newCfg));
             window.location.reload();
@@ -427,6 +431,7 @@
             const statusEl = document.getElementById('sync-status');
             statusEl.innerText = "⏳ 连接云端中...";
             statusEl.classList.add('sync-active');
+            statusEl.onclick = null; // Reset click handler
 
             try {
                 const query = new AV.Query('TieYixiangChecklistPublic');
@@ -467,8 +472,12 @@
                 }
             } catch (error) {
                 console.error("Cloud Error", error);
+                lastCloudError = error;
                 statusEl.style.background = "rgba(255, 59, 48, 0.9)";
-                statusEl.innerHTML = "❌ 配置错误/断网";
+                statusEl.innerHTML = "❌ 配置错误 (点此查看详情)";
+                statusEl.style.cursor = "pointer";
+                statusEl.onclick = () => alert(`错误详情:\nCode: ${error.code}\nMessage: ${error.message}\n\n可能原因:\n1. 网络不通 (请开/关VPN测试)\n2. 配置错误`);
+
                 // Fallback to local
                 const localBackup = localStorage.getItem('tie_tasks_backup');
                 if (localBackup) {
