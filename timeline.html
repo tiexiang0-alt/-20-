@@ -131,6 +131,7 @@
             opacity: 0;
             transition: opacity 0.5s;
             pointer-events: none;
+            z-index: 2000;
         }
 
         .sync-active {
@@ -263,38 +264,62 @@
         // ----------------------------------------------------
         // LEANCLOUD INIT (Serverless Database)
         // ----------------------------------------------------
+        // Debug Mode: Alert on errors
+        window.addEventListener('unhandledrejection', function (event) {
+            console.error("Unhandled rejection:", event.reason);
+        });
+
         AV.init({
             appId: "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI",
             appKey: "KJf0DXD0lmOMn1PJDb3fMUN5",
             serverURL: "https://ru4pzaoo.api.lncldglobal.com"
         });
 
-        const SYNC_ID = 'tieyixiang_v1'; // Single Singleton Object ID for simplicity
-
+        const SYNC_ID = 'tieyixiang_v1';
         let globalState = {};
         let dbObject = null;
 
         // 1. Fetch Cloud State
         async function fetchCloud() {
-            const query = new AV.Query('ChecklistState');
-            query.equalTo('syncId', SYNC_ID);
+            const statusEl = document.getElementById('sync-status');
+            statusEl.innerText = "⏳ 连接云端中...";
+            statusEl.classList.add('sync-active');
+
             try {
+                const query = new AV.Query('ChecklistState');
+                query.equalTo('syncId', SYNC_ID);
                 const results = await query.find();
+
                 if (results.length > 0) {
                     dbObject = results[0];
                     globalState = dbObject.get('data') || {};
+                    // Merge cloud state into local (Cloud wins)
                     applyStateToDOM(globalState);
-                    showSyncStatus();
+
+                    statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 已同步 LeanCloud';
+                    setTimeout(() => statusEl.classList.remove('sync-active'), 3000);
                 } else {
-                    // Create new if not exists
+                    // Create NEW Object if not found
+                    console.log("No cloud data found. Creating new...");
                     const ChecklistState = AV.Object.extend('ChecklistState');
                     dbObject = new ChecklistState();
                     dbObject.set('syncId', SYNC_ID);
                     dbObject.set('data', {});
+
+                    // CRITICAL: Set Permissions to Public
+                    const acl = new AV.ACL();
+                    acl.setPublicReadAccess(true);
+                    acl.setPublicWriteAccess(true);
+                    dbObject.setACL(acl);
+
                     await dbObject.save();
+
+                    statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 初始化完成';
                 }
             } catch (error) {
                 console.error("Cloud Error:", error);
+                statusEl.style.background = "rgba(255, 59, 48, 0.9)";
+                statusEl.innerText = "❌ 连接失败: " + error.message;
                 // Fallback to local
                 globalState = JSON.parse(localStorage.getItem('tie_local_backup')) || {};
                 applyStateToDOM(globalState);
@@ -343,13 +368,25 @@
 
             // Save to Cloud
             if (dbObject) {
+                const statusEl = document.getElementById('sync-status');
+                statusEl.style.background = "rgba(0,0,0,0.8)";
+                statusEl.innerHTML = "⏳ 保存中...";
+                statusEl.classList.add('sync-active');
+
                 dbObject.set('data', globalState);
                 try {
                     await dbObject.save();
-                    showSyncStatus();
+                    statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 保存成功';
+                    setTimeout(() => statusEl.classList.remove('sync-active'), 2000);
                 } catch (e) {
                     console.error("Save failed", e);
+                    statusEl.style.background = "rgba(255, 59, 48, 0.9)";
+                    statusEl.innerText = "❌ 保存失败: " + e.message;
+                    alert("云端保存失败: " + e.message + "\n请检查网络或LeanCloud设置。");
                 }
+            } else {
+                // If object wasn't created yet
+                fetchCloud();
             }
 
             // Haptic
@@ -364,17 +401,24 @@
             document.getElementById('progress-text').innerText = pct + '%';
         }
 
-        function showSyncStatus() {
-            const el = document.getElementById('sync-status');
-            el.classList.add('sync-active');
-            setTimeout(() => el.classList.remove('sync-active'), 2000);
-        }
-
         // Init
         fetchCloud();
 
-        // Optional: Polling for updates from other devices (Poor man's real-time)
-        setInterval(fetchCloud, 5000);
+        // Auto-refresh every 5s to pull changes from other devices
+        setInterval(async () => {
+            if (dbObject) {
+                try {
+                    await dbObject.fetch();
+                    const newData = dbObject.get('data');
+                    // Only update if changes found to avoid UI flickering
+                    if (JSON.stringify(newData) !== JSON.stringify(globalState)) {
+                        globalState = newData;
+                        applyStateToDOM(globalState);
+                        console.log("Remote changes pulled.");
+                    }
+                } catch (e) { console.log("Bg sync err", e); }
+            }
+        }, 5000);
 
     </script>
 </body>
