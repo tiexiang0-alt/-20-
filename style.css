@@ -677,4 +677,94 @@ body::after {
     max-height: 0;
     opacity: 0;
     margin-top: 0;
+}/* --- MOBILE OPTIMIZATION (Strict Override) --- */
+@media (max-width: 480px) {
+
+    /* 1. Reduce Container Padding */
+    .home-container {
+        padding: 90px 16px 40px !important;
+        /* Less top space, tighter side margins */
+    }
+
+    /* 2. Compact Grid Layout */
+    .grid-menu {
+        gap: 12px;
+        /* Tighter gap between cards */
+    }
+
+    /* 3. Card Optimization */
+    .menu-item {
+        padding: 20px;
+        /* Less internal padding */
+    }
+
+    .menu-item .card-icon {
+        font-size: 28px;
+        /* Smaller icons */
+        margin-bottom: 10px;
+    }
+
+    .menu-item h3 {
+        font-size: 16px;
+        /* Smaller titles */
+        margin-bottom: 4px;
+    }
+
+    .menu-item p {
+        font-size: 11px;
+        /* Smaller subtitles */
+        line-height: 1.3;
+    }
+
+    .menu-item .card-arrow {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    /* 4. Dashboard Card Fix (The long one) */
+    .glass-card[style*="grid-column: span 2"] {
+        padding: 16px !important;
+        flex-direction: column !important;
+        /* Stack vertically if needed, but horizontal is better if fits */
+        align-items: flex-start !important;
+        justify-content: center;
+    }
+
+    .glass-card[style*="grid-column: span 2"] .card-icon {
+        margin-right: 12px !important;
+        font-size: 24px !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* 5. Header Scaling */
+    .home-header h1 {
+        font-size: 36px;
+        /* Much smaller headline */
+    }
+
+    .home-header h2 {
+        font-size: 16px;
+    }
+
+    /* 6. Budget Section */
+    .glass-sheet {
+        padding: 20px;
+        /* Tighter sheet padding */
+        border-radius: 24px;
+    }
+
+    .glass-sheet h3 {
+        font-size: 15px;
+    }
+
+    /* 7. Nav Island */
+    .island-content {
+        padding: 8px 16px;
+        /* Smaller dynamic island */
+    }
+
+    .time-display {
+        font-size: 12px;
+    }
 }
