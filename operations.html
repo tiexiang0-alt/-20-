@@ -347,6 +347,56 @@
         </div>
     </section>
 
+    <!-- 7. DAILY EXECUTION SCORE -->
+    <section class="glass-sheet" style="margin: 0 24px 20px;">
+        <h2 style="margin-bottom: 20px;">
+            <div class="section-marker" style="background:#34C759; color:#fff;">📊</div>
+            今日执行打分
+        </h2>
+        <div class="sheet-content">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                <input type="number" id="op-score-val" placeholder="0-100" min="0" max="100"
+                    style="width:80px; padding:12px; font-size:20px; font-weight:700; text-align:center; border-radius:12px; border:1px solid rgba(0,0,0,0.1);">
+                <input type="text" id="op-score-comment" placeholder="一句话点评 (如: 声音比昨天大...)"
+                    style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1);">
+                <button onclick="saveOpScore()"
+                    style="padding:12px 20px; background:var(--system-green); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer;">
+                    打分
+                </button>
+            </div>
+            <!-- Last Score Display -->
+            <div id="op-score-display"
+                style="background:rgba(52,199,89,0.1); padding:15px; border-radius:12px; color:var(--text-secondary); font-size:13px; display:none;">
+                上次打分: <strong style="color:var(--system-green); font-size:16px;">—</strong> <span
+                    style="margin-left:10px;">—</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. GOAL TRACKER -->
+    <section class="glass-sheet" style="margin: 0 24px 60px;">
+        <h2 style="margin-bottom: 20px;">
+            <div class="section-marker" style="background:#AF52DE; color:#fff;">🎯</div>
+            目标达成清单
+        </h2>
+        <div class="sheet-content">
+            <!-- Add Goal -->
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="text" id="op-goal-input" placeholder="输入必须要达成的目标..."
+                    style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); background:rgba(255,255,255,0.5);">
+                <button onclick="addOpGoal()"
+                    style="padding:12px 20px; background:var(--system-purple); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer;">
+                    + 立Flag
+                </button>
+            </div>
+
+            <!-- List -->
+            <div id="op-goal-list" style="display:grid; gap:10px;">
+                <div style="text-align:center; color:#999; padding:20px;">加载目标中...</div>
+            </div>
+        </div>
+    </section>
+
     <!-- LeanCloud SDK & Logic -->
     <script src="//code.bdstatic.com/npm/leancloud-storage@4.12.0/dist/av-min.js"></script>
     <script>
@@ -365,14 +415,22 @@
                 if (typeof AV !== 'undefined') {
                     if (!AV.applicationId) AV.init(CLOUD_CONFIG_OPS);
                     clearInterval(initInterval);
+
+                    // Load All Modules
                     loadOpMemosWithRetry(3);
+                    loadOpScoreWithRetry(3);
+                    loadOpGoalsWithRetry(3);
+
                 } else if (attempts > 50) {
                     clearInterval(initInterval);
-                    document.getElementById('op-memo-list').innerHTML = '<div style="color:red; text-align:center;">SDK Load Timeout</div>';
+                    const errHTML = '<div style="color:red; text-align:center;">SDK Load Timeout</div>';
+                    document.getElementById('op-memo-list').innerHTML = errHTML;
+                    document.getElementById('op-goal-list').innerHTML = errHTML;
                 }
             }, 100);
         });
 
+        // --- MODULE 1: MEMOS ---
         async function loadOpMemosWithRetry(retries) {
             const container = document.getElementById('op-memo-list');
             if (retries === 3) container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">正在连接云端...</div>';
@@ -401,55 +459,171 @@
                     `;
                     container.appendChild(div);
                 });
-            } catch (e) {
-                console.warn(`Load Attempt Failed (Left: ${retries})`, e);
-                if (retries > 0) {
-                    container.innerHTML = `<div style="text-align:center; color:#ff9500; padding:20px; font-size:12px;">连接不稳定，正在重试 (${3 - retries + 1}/3)...</div>`;
-                    setTimeout(() => loadOpMemosWithRetry(retries - 1), 1500);
-                } else {
-                    renderErrorOps(e, container);
+            } catch (e) { handleRetry(e, retries, container, loadOpMemosWithRetry); }
+        }
+
+        // --- MODULE 2: SCORE ---
+        async function loadOpScoreWithRetry(retries) {
+            const display = document.getElementById('op-score-display');
+            try {
+                const query = new AV.Query('OperationsScore');
+                query.descending('createdAt');
+                query.limit(1); // Get latest
+                const results = await Promise.race([
+                    query.find(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Query Timeout')), 5000))
+                ]);
+
+                if (results.length > 0) {
+                    const latest = results[0];
+                    const dateStr = latest.createdAt.toLocaleDateString();
+                    display.style.display = 'block';
+                    display.innerHTML = `上次打分 (${dateStr}): <strong style="color:var(--system-green); font-size:16px;">${latest.get('score')}分</strong> <span style="margin-left:10px;">${latest.get('comment') || ''}</span>`;
                 }
-            }
+            } catch (e) { console.warn("Score Load Failed", e); }
         }
 
-        function renderErrorOps(e, container) {
-            if (e.code === 101) {
-                container.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px; font-size:13px;">暂无执行备忘 (Class Not Found)</div>';
-            } else if ((e.code === 0 && e.message.includes("Network")) || e.message === 'Query Timeout') {
-                container.innerHTML = `<div style="color:red; text-align:center; font-size:12px; padding:10px; background:rgba(255,0,0,0.1); border-radius:8px;">
-                    ⚠️ 网络不稳定<br>
-                    请检查是否有VPN影响，或刷新重试。
-                 </div>`;
-            } else {
-                container.innerHTML = `<div style="color:red; text-align:center; font-size:12px;">Error ${e.code || 'X'}: ${e.message}</div>`;
-            }
+        async function saveOpScore() {
+            const scoreVal = document.getElementById('op-score-val').value;
+            const commentVal = document.getElementById('op-score-comment').value;
+            if (!scoreVal) return alert("请填写分数");
+
+            try {
+                const Score = AV.Object.extend('OperationsScore');
+                const score = new Score();
+                score.set('score', parseInt(scoreVal));
+                score.set('comment', commentVal);
+
+                // ACL
+                const acl = new AV.ACL();
+                acl.setPublicReadAccess(true);
+                acl.setPublicWriteAccess(true);
+                score.setACL(acl);
+
+                await score.save();
+                alert("打分成功！");
+                document.getElementById('op-score-val').value = '';
+                document.getElementById('op-score-comment').value = '';
+                loadOpScoreWithRetry(3);
+            } catch (e) { alert("保存失败: " + e.message); }
         }
 
-        async function addOpMemo() {
-            const input = document.getElementById('op-memo-input');
+        // --- MODULE 3: GOALS ---
+        async function loadOpGoalsWithRetry(retries) {
+            const container = document.getElementById('op-goal-list');
+            if (retries === 3) container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">正在加载目标...</div>';
+
+            try {
+                const query = new AV.Query('OperationsGoal');
+                query.descending('createdAt');
+                const results = await Promise.race([
+                    query.find(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Query Timeout')), 5000))
+                ]);
+
+                container.innerHTML = '';
+                if (results.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px; font-size:13px;">暂无目标，定个小目标吧~</div>';
+                    return;
+                }
+
+                results.forEach(goal => {
+                    const isDone = goal.get('isDone');
+                    const div = document.createElement('div');
+                    div.style.cssText = `display:flex; align-items:center; padding:12px; background:rgba(255,255,255,0.6); border-radius:12px; border-left:4px solid ${isDone ? '#AF52DE' : '#ccc'}; opacity:${isDone ? 0.6 : 1}`;
+
+                    div.innerHTML = `
+                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleOpGoal('${goal.id}', this.checked)" 
+                            style="width:20px; height:20px; margin-right:12px; accent-color:var(--system-purple);">
+                        <span style="flex:1; font-size:14px; text-decoration:${isDone ? 'line-through' : 'none'}; color:${isDone ? '#888' : '#000'}">${goal.get('content')}</span>
+                        <button onclick="deleteOpGoal('${goal.id}')" style="background:none; border:none; color:#ccc; font-size:12px; cursor:pointer;">✕</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { handleRetry(e, retries, container, loadOpGoalsWithRetry); }
+        }
+
+        async function addOpGoal() {
+            const input = document.getElementById('op-goal-input');
             const text = input.value.trim();
             if (!text) return;
 
             input.disabled = true;
             try {
-                const Memo = AV.Object.extend('OperationsMemo');
-                const memo = new Memo();
-                memo.set('content', text);
+                const Goal = AV.Object.extend('OperationsGoal');
+                const goal = new Goal();
+                goal.set('content', text);
+                goal.set('isDone', false);
 
                 const acl = new AV.ACL();
                 acl.setPublicReadAccess(true);
                 acl.setPublicWriteAccess(true);
-                memo.setACL(acl);
+                goal.setACL(acl);
 
+                await goal.save();
+                input.value = '';
+                loadOpGoalsWithRetry(3);
+            } catch (e) { alert("添加失败: " + e.message); }
+            finally { input.disabled = false; input.focus(); }
+        }
+
+        async function toggleOpGoal(id, isDone) {
+            try {
+                const goal = AV.Object.createWithoutData('OperationsGoal', id);
+                goal.set('isDone', isDone);
+                await goal.save();
+                loadOpGoalsWithRetry(3); // Refresh to update sorting or style
+            } catch (e) { console.error(e); alert("更新失败"); }
+        }
+
+        async function deleteOpGoal(id) {
+            if (!confirm("删除此目标？")) return;
+            try {
+                const goal = AV.Object.createWithoutData('OperationsGoal', id);
+                await goal.destroy();
+                loadOpGoalsWithRetry(3);
+            } catch (e) { alert("删除失败"); }
+        }
+
+
+        // --- UTILS ---
+        function handleRetry(e, retries, container, retryFn) {
+            console.warn(`Load Attempt Failed (Left: ${retries})`, e);
+            if (retries > 0) {
+                container.innerHTML = `<div style="text-align:center; color:#ff9500; padding:20px; font-size:12px;">连接不稳定，正在重试 (${3 - retries + 1}/3)...</div>`;
+                setTimeout(() => retryFn(retries - 1), 1500);
+            } else {
+                if (e.code === 101) {
+                    container.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px; font-size:13px;">暂无数据 (Class Not Found)</div>';
+                } else if ((e.code === 0 && e.message.includes("Network")) || e.message === 'Query Timeout') {
+                    container.innerHTML = `<div style="color:red; text-align:center; font-size:12px; padding:10px; background:rgba(255,0,0,0.1); border-radius:8px;">
+                        ⚠️ 网络不稳定 (Error 0/Timeout)<br>请刷新或检查VPN
+                     </div>`;
+                } else {
+                    container.innerHTML = `<div style="color:red; text-align:center; font-size:12px;">Error ${e.code || 'X'}: ${e.message}</div>`;
+                }
+            }
+        }
+
+        // --- OLD FUNCTIONS (Keep wrappers if needed, but logic moved above) ---
+        async function addOpMemo() {
+            const input = document.getElementById('op-memo-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.disabled = true;
+            try {
+                const Memo = AV.Object.extend('OperationsMemo');
+                const memo = new Memo();
+                memo.set('content', text);
+                const acl = new AV.ACL();
+                acl.setPublicReadAccess(true);
+                acl.setPublicWriteAccess(true);
+                memo.setACL(acl);
                 await memo.save();
                 input.value = '';
                 loadOpMemosWithRetry(3);
-            } catch (e) {
-                alert("保存失败: " + e.message);
-            } finally {
-                input.disabled = false;
-                input.focus();
-            }
+            } catch (e) { alert("保存失败: " + e.message); }
+            finally { input.disabled = false; input.focus(); }
         }
 
         async function deleteOpMemo(id) {
@@ -458,9 +632,7 @@
                 const memo = AV.Object.createWithoutData('OperationsMemo', id);
                 await memo.destroy();
                 loadOpMemosWithRetry(3);
-            } catch (e) {
-                alert("删除失败");
-            }
+            } catch (e) { alert("删除失败"); }
         }
     </script>
     <script src="script.js"></script>
