@@ -21,18 +21,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (results.length > 0) {
                 // Found existing deadline
                 const settings = results[0];
-                const savedStart = settings.get('campaignStartTime');
+                let savedStart = settings.get('campaignStartTime');
+
+                // DATA FIX: If it was set to 12:00 (Noon), correct it to 00:00 (Midnight)
+                if (savedStart.getHours() === 12) {
+                    console.log("Fixing start time from Noon to Midnight...");
+                    savedStart.setHours(0, 0, 0, 0);
+                    settings.set('campaignStartTime', savedStart);
+                    await settings.save();
+                }
+
                 // Deadline = Start Time + 20 Days
                 return new Date(savedStart.getTime() + (20 * 24 * 60 * 60 * 1000));
             } else {
-                // First Run: Initialize "Today 12:00 PM"
+                // First Run: Initialize "Today 00:00 AM" (Midnight)
                 console.log("Initializing Global Deadline...");
                 const SettingsClass = AV.Object.extend('TieYixiangGlobalSettings');
                 const settings = new SettingsClass();
 
-                // Set to Today 12:00:00
+                // Set to Today 00:00:00
                 const now = new Date();
-                now.setHours(12, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
 
                 settings.set('campaignStartTime', now);
 
@@ -49,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("Countdown Sync Error", e);
             // Fallback to local 20 days if cloud fails
             const fallbackStart = new Date();
-            fallbackStart.setHours(12, 0, 0, 0);
+            fallbackStart.setHours(0, 0, 0, 0);
             return new Date(fallbackStart.getTime() + (20 * 24 * 60 * 60 * 1000));
         }
     }
