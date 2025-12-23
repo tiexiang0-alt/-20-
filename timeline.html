@@ -4,86 +4,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>决战清单 | 铁毅祥</title>
+    <title>决战清单 · 铁毅祥20天计划</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* CHECKLIST STYLES */
+        .phase-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--system-indigo);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+            transition: opacity 0.3s;
+            cursor: pointer;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            margin-right: 15px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .task-item.completed .checkbox {
+            background: var(--system-green);
+            border-color: var(--system-green);
+            transform: scale(1.1);
+        }
+
+        .task-item.completed .checkbox::after {
+            content: '✓';
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #1d1d1f;
+            transition: color 0.3s;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .task-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 20px 24px 30px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--system-green);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
 </head>
 
-<body class="ios-theme sub-page">
-    <div class="background-mesh mesh-gold"></div>
+<body class="ios-theme sub-page" style="padding-bottom: 100px;">
+    <div class="background-mesh mesh-blue"></div>
 
     <nav class="top-nav">
-        <a href="index.html" class="back-btn">← 返回</a>
-        <span class="page-title">决战清单</span>
+        <a href="index.html" class="back-btn">← 返回指挥中心</a>
+        <span class="page-title">决战行动清单</span>
     </nav>
 
     <main class="content-scroll">
-        <!-- Todo List App Module -->
-        <section class="glass-card content-block todo-wrapper">
-            <div class="todo-header">
-                <h2>待办事项</h2>
-                <span class="date-today" id="today-date">2025-12-24</span>
+
+        <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 10px;">行动指挥部</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            您的战役进度将自动保存在本设备。<br>
+            <span style="font-size:12px; opacity:0.7;">(数据存储于 LocalStorage)</span>
+        </p>
+
+        <!-- Phase 1 -->
+        <section class="glass-sheet">
+            <div class="phase-header">
+                <span>Phase 1: 基础建设 (Day 1-3)</span>
+                <span class="section-marker" style="font-size:12px; width:24px; height:24px;">01</span>
             </div>
 
-            <div class="add-task-bar">
-                <input type="text" id="new-task-input" placeholder="添加新的战斗任务...">
-                <button id="add-task-btn">+</button>
+            <div class="task-item" onclick="toggleTask(this, 'p1_1')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">大众点评维护</div>
+                    <div class="task-desc">确保评分稳定在4.7+，回复最新3条差评。</div>
+                </div>
             </div>
 
-            <div class="todo-list" id="todo-list">
-                <!-- Javascript will populate this -->
+            <div class="task-item" onclick="toggleTask(this, 'p1_2')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">物料准备</div>
+                    <div class="task-desc">定制"15年老店"工服，制作"不踩雷"桌贴。</div>
+                </div>
             </div>
-        </section>
 
-        <!-- 20 Day Timeline -->
-        <section class="glass-card content-block">
-            <div class="badge-header">行动时间轴</div>
-            <h2>20天生死时速</h2>
-
-            <div class="timeline-v2">
-                <div class="t-phase">
-                    <div class="t-time">Day 1-3</div>
-                    <div class="t-content">
-                        <strong>基础建设期</strong>
-                        <p>采购新碗（区分羊/牛）、认证官方账号、全员动员培训。</p>
-                    </div>
-                </div>
-                <div class="t-phase">
-                    <div class="t-time">Day 4-10</div>
-                    <div class="t-content">
-                        <strong>内容铺设期</strong>
-                        <p>10位达人进店拍摄，小红书笔记开始发布。</p>
-                    </div>
-                </div>
-                <div class="t-phase">
-                    <div class="t-time">Day 11-15</div>
-                    <div class="t-content">
-                        <strong>流量助推期</strong>
-                        <p>筛选优质视频投DOU+，评论区控评引导。</p>
-                    </div>
-                </div>
-                <div class="t-phase">
-                    <div class="t-time">Day 16-20</div>
-                    <div class="t-content">
-                        <strong>全面爆发期</strong>
-                        <p>搜索霸屏，各种榜单可见，门店排队常态化。</p>
-                    </div>
+            <div class="task-item" onclick="toggleTask(this, 'p1_3')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">小红书账号搭建</div>
+                    <div class="task-desc">注册官方号，完成企业蓝V认证。</div>
                 </div>
             </div>
         </section>
 
-        <section class="glass-card content-block reform-alert">
-            <h2>🚨 改革警告</h2>
-            <p><strong>收权行动：</strong>不再依赖传话。未来20天您必须亲自下场，亲力亲为。</p>
+        <!-- Phase 2 -->
+        <section class="glass-sheet">
+            <div class="phase-header">
+                <span style="color:var(--system-orange);">Phase 2: 练兵 & 铺量 (Day 4-7)</span>
+                <span class="section-marker" style="font-size:12px; width:24px; height:24px;">02</span>
+            </div>
+
+            <div class="task-item" onclick="toggleTask(this, 'p2_1')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">全员喊堂演练 (早会)</div>
+                    <div class="task-desc">确保每一位进店顾客都能听到"来了您嘞！"</div>
+                </div>
+            </div>
+
+            <div class="task-item" onclick="toggleTask(this, 'p2_2')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">首批达人探店 (3人)</div>
+                    <div class="task-desc">邀请3位KOC进店拍摄，测试脚本流程。</div>
+                </div>
+            </div>
         </section>
+
+        <!-- Phase 3 -->
+        <section class="glass-sheet">
+            <div class="phase-header">
+                <span style="color:var(--system-red);">Phase 3: 饱和攻击 (Day 8-15)</span>
+                <span class="section-marker" style="font-size:12px; width:24px; height:24px;">03</span>
+            </div>
+
+            <div class="task-item" onclick="toggleTask(this, 'p3_1')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">发布"避坑指南"笔记</div>
+                    <div class="task-desc">在小红书发布3篇搜索截流笔记 (含关键词)。</div>
+                </div>
+            </div>
+
+            <div class="task-item" onclick="toggleTask(this, 'p3_2')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">抖音KOC矩阵爆发</div>
+                    <div class="task-desc">8-10位达人视频集中发布，占领同城页。</div>
+                </div>
+            </div>
+
+            <div class="task-item" onclick="toggleTask(this, 'p3_3')">
+                <div class="checkbox"></div>
+                <div class="task-content">
+                    <div class="task-title">投流赛马</div>
+                    <div class="task-desc">筛选2条优质视频，投放DOU+ (各¥500)。</div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <script src="script.js"></script>
+    <!-- FLOATING PROGRESS -->
+    <div class="progress-bar-container">
+        <span style="font-size:12px; font-weight:700; color:var(--text-secondary);">总体进度</span>
+        <div class="progress-track">
+            <div class="progress-fill" id="total-progress"></div>
+        </div>
+        <span style="font-size:16px; font-weight:800; color:var(--system-indigo);" id="progress-text">0%</span>
+    </div>
+
     <script>
-        // Inline script for specific page logic logic to keep it simple
-        document.addEventListener('DOMContentLoaded', () => {
-            initTodo();
-            document.getElementById('today-date').innerText = new Date().toLocaleDateString('zh-CN');
-        });
+        // --- PERSISTENCE LOGIC ---
+        const DB_KEY = 'tieyixiang_checklist_v1';
+
+        // 1. Load State on Init
+        function loadState() {
+            const saved = JSON.parse(localStorage.getItem(DB_KEY)) || {};
+            const items = document.querySelectorAll('.task-item');
+            let completedCount = 0;
+
+            items.forEach(item => {
+                // Extract ID from onclick attribute string (simple parser)
+                const onclickStr = item.getAttribute('onclick');
+                const idMatch = onclickStr.match(/'([^']+)'/);
+                if (idMatch && idMatch[1]) {
+                    const taskId = idMatch[1];
+                    if (saved[taskId]) {
+                        item.classList.add('completed');
+                        completedCount++;
+                    }
+                }
+            });
+            updateProgress(completedCount, items.length);
+        }
+
+        // 2. Toggle Function
+        function toggleTask(el, taskId) {
+            el.classList.toggle('completed');
+
+            // Save to Storage
+            const saved = JSON.parse(localStorage.getItem(DB_KEY)) || {};
+            if (el.classList.contains('completed')) {
+                saved[taskId] = true;
+            } else {
+                delete saved[taskId];
+            }
+            localStorage.setItem(DB_KEY, JSON.stringify(saved));
+
+            // Visual Haptic
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50); // Haptic feedback on mobile
+            }
+
+            // Update Progress
+            const items = document.querySelectorAll('.task-item');
+            const done = document.querySelectorAll('.task-item.completed').length;
+            updateProgress(done, items.length);
+        }
+
+        function updateProgress(done, total) {
+            const pct = Math.round((done / total) * 100);
+            document.getElementById('total-progress').style.width = pct + '%';
+            document.getElementById('progress-text').innerText = pct + '%';
+        }
+
+        // Run
+        loadState();
     </script>
 </body>
 
