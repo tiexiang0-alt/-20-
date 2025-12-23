@@ -16,50 +16,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function getSharedDeadline() {
         try {
             const query = new AV.Query('TieYixiangGlobalSettings');
+            query.equalTo('settingVersion', 3); // Force fresh sync for Beijing Time fix
             const results = await query.find();
 
             if (results.length > 0) {
-                // Found existing deadline
                 const settings = results[0];
-                let savedStart = settings.get('campaignStartTime');
-
-                // DATA FIX: If it was set to 12:00 (Noon), correct it to 00:00 (Midnight)
-                if (savedStart.getHours() === 12) {
-                    console.log("Fixing start time from Noon to Midnight...");
-                    savedStart.setHours(0, 0, 0, 0);
-                    settings.set('campaignStartTime', savedStart);
-                    await settings.save();
-                }
-
-                // Deadline = Start Time + 20 Days
+                const savedStart = settings.get('campaignStartTime');
                 return new Date(savedStart.getTime() + (20 * 24 * 60 * 60 * 1000));
             } else {
-                // First Run: Initialize "Today 00:00 AM" (Midnight)
-                console.log("Initializing Global Deadline...");
+                console.log("Initializing Global Deadline (Beijing Time v3)...");
                 const SettingsClass = AV.Object.extend('TieYixiangGlobalSettings');
                 const settings = new SettingsClass();
 
-                // Set to Today 00:00:00
+                // Calculate Beijing Midnight (UTC+8) strictly
                 const now = new Date();
-                now.setHours(0, 0, 0, 0);
+                const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000); // Current global UTC
+                const beijingTime = nowUTC + (8 * 60 * 60 * 1000); // Shift to Beijing frame
+                const beijingMidnight = beijingTime - (beijingTime % (24 * 60 * 60 * 1000)); // Floor to start of day
+                const globalMidnight = beijingMidnight - (8 * 60 * 60 * 1000); // Shift back to UTC
 
-                settings.set('campaignStartTime', now);
+                const startObj = new Date(globalMidnight);
 
-                // Set ACL
+                settings.set('campaignStartTime', startObj);
+                settings.set('settingVersion', 3); // Version Tag
+
+                // Essential Permissions
                 const acl = new AV.ACL();
                 acl.setPublicReadAccess(true);
-                acl.setPublicWriteAccess(true); // Allow adjustments if needed
+                acl.setPublicWriteAccess(true);
                 settings.setACL(acl);
 
                 await settings.save();
-                return new Date(now.getTime() + (20 * 24 * 60 * 60 * 1000));
+                return new Date(startObj.getTime() + (20 * 24 * 60 * 60 * 1000));
             }
         } catch (e) {
             console.error("Countdown Sync Error", e);
-            // Fallback to local 20 days if cloud fails
-            const fallbackStart = new Date();
-            fallbackStart.setHours(0, 0, 0, 0);
-            return new Date(fallbackStart.getTime() + (20 * 24 * 60 * 60 * 1000));
+            // Fallback: Attempt local Beijing Midnight calculation
+            const now = new Date();
+            const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const beijingTime = nowUTC + (8 * 60 * 60 * 1000);
+            const beijingMidnight = beijingTime - (beijingTime % (24 * 60 * 60 * 1000));
+            const globalMidnight = beijingMidnight - (8 * 60 * 60 * 1000);
+
+            return new Date(globalMidnight + (20 * 24 * 60 * 60 * 1000));
         }
     }
 
