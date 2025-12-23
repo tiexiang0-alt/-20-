@@ -282,17 +282,24 @@
         let lastCloudError = null;
 
         function getCloudConfig() {
-            let config = DEFAULT_TASKS;
+            let config = DEFAULT_CONFIG;
             const saved = localStorage.getItem('tie_cloud_config');
 
             if (saved) {
-                config = JSON.parse(saved);
-                // AUTO-FIX: Check if serverURLs matches the correct one.
-                const currentUrl = config.serverURLs || config.serverURL;
-                if (!currentUrl || !currentUrl.includes('ru4pzaoo')) {
-                    console.log("Detected old/wrong config, auto-fixing...");
+                try {
+                    config = JSON.parse(saved);
+                    // AUTO-FIX: Check if serverURLs matches the correct one.
+                    const currentUrl = config.serverURLs || config.serverURL;
+                    const isKeyMatch = (config.appKey === DEFAULT_CONFIG.appKey);
+
+                    // If URL is missing/wrong OR Key is wrong (case mismatch), force reset
+                    if (!currentUrl || !currentUrl.includes('ru4pzaoo') || !isKeyMatch) {
+                        console.log("Detected old/wrong config, auto-fixing...");
+                        config = DEFAULT_CONFIG;
+                        localStorage.setItem('tie_cloud_config', JSON.stringify(DEFAULT_CONFIG));
+                    }
+                } catch (e) {
                     config = DEFAULT_CONFIG;
-                    localStorage.setItem('tie_cloud_config', JSON.stringify(DEFAULT_CONFIG));
                 }
                 return config;
             }
