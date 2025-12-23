@@ -4,75 +4,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>线上截流 | 铁毅祥</title>
+    <title>线上截流 · 铁毅祥20天计划</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .strategy-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-right: 6px;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
+
+        .highlight-text {
+            color: var(--system-indigo);
+            font-weight: 700;
+        }
+
+        .script-card {
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: "PingFang SC", sans-serif;
+            margin-top: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .script-card::before {
+            content: '🎥 拍摄脚本';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--system-blue);
+            color: white;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .shot-row {
+            display: flex;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 12px;
+        }
+
+        .shot-num {
+            font-weight: 800;
+            color: var(--system-blue);
+            width: 30px;
+            flex-shrink: 0;
+        }
+    </style>
 </head>
 
 <body class="ios-theme sub-page">
-    <div class="background-mesh mesh-purple"></div>
+    <div class="background-mesh"></div>
 
     <nav class="top-nav">
-        <a href="index.html" class="back-btn">← 返回</a>
-        <span class="page-title">线上截流</span>
+        <a href="index.html" class="back-btn">← 返回指挥中心</a>
+        <span class="page-title">线上截流行动</span>
     </nav>
 
     <main class="content-scroll">
-        <!-- Xiaohongshu -->
-        <section class="glass-card content-block xhs-block">
-            <div class="platform-icon">📕</div>
-            <h2>小红书策略：截流搜索</h2>
-            <p class="text-body">不做"种草"（那是给新奇特做的），只做"搜索截流"（给做攻略的游客看）。</p>
 
-            <div class="tactic-box">
-                <h3>关键词埋点</h3>
-                <div class="tags">
-                    <span>#回民街羊肉泡馍</span>
-                    <span>#西安不踩雷</span>
-                    <span>#西安美食攻略</span>
-                </div>
+        <!-- Header -->
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 10px;">流量截击战</h1>
+            <p style="color: var(--text-secondary); line-height: 1.5;">目标：在游客产生消费意图（搜索/看推荐）的关键环节，在消费决策前这 "最后100米" 实施拦截。
+            </p>
+        </div>
+
+        <!-- Section 1: Xiaohongshu -->
+        <section class="glass-sheet">
+            <div class="anchor-header red">
+                <span style="font-weight: 700;">📕 小红书：搜索截流</span>
+                <span class="section-marker">01</span>
             </div>
+            <div class="anchor-body">
+                <div class="badge-header">核心逻辑：游客避坑指南</div>
+                <p style="margin-bottom: 20px; font-size: 15px;">小红书不是用来种草的，是用来给外地人"确认安全感"的。内容必须直接解决"怕踩雷"的痛点。</p>
 
-            <div class="tactic-box">
-                <h3>捆绑战术 (蹭热度)</h3>
-                <p>把自己和头部老店放在一起比较：</p>
-                <div class="equation">
-                    马洪(小炒) + 老刘家(牛肉) + <strong>铁毅祥(羊肉)</strong> = <span class="gold">必吃三巨头</span>
+                <div class="flow-list">
+                    <div class="flow-item">
+                        <div class="flow-title">捆绑战术 (借力打力)</div>
+                        <div class="flow-desc">
+                            不要单打独斗。必须强行蹭头部流量，在标题和正文中建立"回民街三巨头"的心智：
+                            <div class="verbatim-box">
+                                <span class="highlight-text">马洪 (小炒王)</span> + <span class="highlight-text">老刘家
+                                    (牛肉王)</span> + <span class="highlight-text">铁毅祥 (羊肉王)</span><br>
+                                <span style="font-size:12px; color:gray;">= 本地人认证必吃榜</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-item">
+                        <div class="flow-title">关键词埋点矩阵</div>
+                        <div class="flow-desc">
+                            <span class="strategy-tag">#回民街羊肉泡馍</span>
+                            <span class="strategy-tag">#西安不踩雷</span>
+                            <span class="strategy-tag">#钟楼附近美食</span>
+                            <span class="strategy-tag">#西安本地人推荐</span>
+                        </div>
+                    </div>
+
+                    <div class="flow-item">
+                        <div class="flow-title">内容模版</div>
+                        <div class="flow-desc">
+                            标题参考：<br>
+                            👉 "外地人来回民街，只吃这三家不踩雷！"<br>
+                            👉 "本地土著带路：真羊肉泡馍还得是这家。"
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Douyin -->
-        <section class="glass-card content-block douyin-block">
-            <div class="platform-icon">🎵</div>
-            <h2>抖音策略：达人铺量</h2>
-            <p class="text-body">建立KOC矩阵，营造"15年老店，外地人友好"的信任感。</p>
-
-            <div class="data-grid">
-                <div class="data-item">
-                    <span class="num">8-10</span>
-                    <span class="label">首批达人数</span>
-                </div>
-                <div class="data-item">
-                    <span class="num">¥800</span>
-                    <span class="label">单条预算上限</span>
-                </div>
+        <!-- Section 2: Douyin -->
+        <section class="glass-sheet">
+            <div class="anchor-header dark">
+                <span style="font-weight: 700;">🎵 抖音 KOC 矩阵</span>
+                <span class="section-marker">02</span>
             </div>
+            <div class="anchor-body">
+                <div class="badge-header">铺量逻辑：全网刷屏</div>
 
-            <div class="tactic-box">
-                <h3>内容三要素</h3>
-                <ul class="simple-list">
-                    <li>1. 主角必须是羊肉泡</li>
-                    <li>2. 强调15年老店</li>
-                    <li>3. 外地人放心吃，不宰客</li>
-                </ul>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                    <div style="background:rgba(0,0,0,0.05); padding:15px; border-radius:12px;">
+                        <div style="font-size:12px; color:gray;">达人量级</div>
+                        <div style="font-size:20px; font-weight:700;">3k - 2w</div>
+                        <div style="font-size:12px; color:var(--system-green);">性价比最高</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.05); padding:15px; border-radius:12px;">
+                        <div style="font-size:12px; color:gray;">单条预算</div>
+                        <div style="font-size:20px; font-weight:700;">¥500-800</div>
+                        <div style="font-size:12px; color:var(--system-green);">含探店费</div>
+                    </div>
+                </div>
+
+                <div class="flow-list">
+                    <div class="flow-item">
+                        <div class="flow-title">核心三要素 (必说)</div>
+                        <div class="flow-desc">
+                            1. <span class="highlight-text">主角是羊肉</span>：强调鲜羊肉、汤浓、馍筋道。<br>
+                            2. <span class="highlight-text">15年老店</span>：用时间换取信任。<br>
+                            3. <span class="highlight-text">外地人友好</span>：闭眼冲，不宰客，放心吃。
+                        </div>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-title">赛马投流机制</div>
+                        <div class="flow-desc">
+                            视频发布后观察 <span class="highlight-text">4-8天</span>。若自然流量互动率高（完播/评论好），立即追加Dou+投放；若数据平平，放弃助推。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCRIPT DOWNLOAD SECTION -->
+                <div style="margin-top: 40px;">
+                    <h3 style="font-size:16px; font-weight:700; margin-bottom:10px;">📄 附件：抖音达人通用拍摄脚本</h3>
+                    <p style="font-size:13px; color:gray; margin-bottom:15px;">直接发给达人，要求按此逻辑拍摄。</p>
+
+                    <div class="script-card">
+                        <div class="shot-row">
+                            <div class="shot-num">01</div>
+                            <div style="font-size:13px;">
+                                <strong>这才是西安 (3s)</strong><br>
+                                镜头：钟楼大远景 → 快速切到回民街热闹人流。<br>
+                                <span style="color:gray; font-size:11px;">旁白："来西安不做攻略去回民街？小心踩坑！"</span>
+                            </div>
+                        </div>
+                        <div class="shot-row">
+                            <div class="shot-num">02</div>
+                            <div style="font-size:13px;">
+                                <strong>发现宝藏 (3s)</strong><br>
+                                镜头：从嘈杂街道转入铁毅祥门头，特写"15年老店"牌匾。<br>
+                                <span style="color:gray; font-size:11px;">旁白："本地土著带路，这15年的老味道，稳！"</span>
+                            </div>
+                        </div>
+                        <div class="shot-row">
+                            <div class="shot-num">03</div>
+                            <div style="font-size:13px;">
+                                <strong>视觉暴击 (5s)</strong><br>
+                                镜头：掰馍特写 → 滚烫高汤浇在馍上的慢动作 → 羊肉大块特写。<br>
+                                <span style="color:gray; font-size:11px;">旁白："看这汤色，全是鲜羊肉熬的，一点膻味没有。"</span>
+                            </div>
+                        </div>
+                        <div class="shot-row" style="border:none; margin-bottom:0; padding-bottom:0;">
+                            <div class="shot-num">04</div>
+                            <div style="font-size:13px;">
+                                <strong>信任收尾 (3s)</strong><br>
+                                镜头：达人吃得满头大汗，竖大拇指。<br>
+                                <span style="color:gray; font-size:11px;">旁白："外地朋友闭眼冲铁毅祥，绝对不踩雷！"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
-        <section class="glass-card content-block">
-            <div class="badge-header">投流策略</div>
-            <h2>赛马机制</h2>
-            <p class="text-body">自然流量跑得好的视频（有互动、有完播），立刻投DOU+助推。不要给死视频花钱。</p>
-        </section>
     </main>
 </body>
 
