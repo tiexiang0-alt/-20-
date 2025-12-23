@@ -324,28 +324,31 @@
 
         // Initial Default Data (If Cloud is Empty)
         const DEFAULT_TASKS = [
-            // Phase 1
-            { id: 't1', phase: 'p1', content: '大众点评维护', desc: '确保评分稳定在4.7+，回复最新3条差评。', completed: false },
-            { id: 't2', phase: 'p1', content: '物料准备', desc: '定制"15年老店"工服，制作"不踩雷"桌贴。', completed: false },
-            { id: 't3', phase: 'p1', content: '小红书账号搭建', desc: '注册官方号，完成企业蓝V认证。', completed: false },
-            // Phase 2
-            { id: 't4', phase: 'p2', content: '全员喊堂演练 (早会)', desc: '确保每一位进店顾客都能听到"来了您嘞！"', completed: false },
-            { id: 't5', phase: 'p2', content: '首批达人探店 (3人)', desc: '邀请3位KOC进店拍摄，测试脚本流程。', completed: false },
-            // Phase 3
-            { id: 't6', phase: 'p3', content: '发布"避坑指南"笔记', desc: '在小红书发布3篇搜索截流笔记 (含关键词)。', completed: false },
-            { id: 't7', phase: 'p3', content: '抖音KOC矩阵爆发', desc: '8-10位达人视频集中发布，占领同城页。', completed: false },
-            { id: 't8', phase: 'p3', content: '投流赛马', desc: '筛选2条优质视频，投放DOU+ (各¥500)。', completed: false }
+            // Online Marketing (线上营销)
+            { id: 't1', phase: 'cat_online', content: '大众点评维护', desc: '确保评分稳定在4.7+，回复最新3条差评。', completed: false },
+            { id: 't2', phase: 'cat_online', content: '小红书"捆绑战术"', desc: '发布笔记绑定"马洪(小炒)+老刘(牛肉)+铁毅祥(羊肉)"。', completed: false },
+            { id: 't3', phase: 'cat_online', content: '抖音KOC矩阵', desc: '安排8-10位同城达人集中探店发布视频。', completed: false },
+
+            // Offline Promotion (线下推广)
+            { id: 't4', phase: 'cat_offline', content: '制作"避坑指南"地图', desc: '设计不像广告的地图单页，标注回民街公厕与景点。', completed: false },
+            { id: 't5', phase: 'cat_offline', content: '酒店前台合作', desc: '与步行街周边3家如家/全季达成导流协议。', completed: false },
+            { id: 't6', phase: 'cat_offline', content: '街头截流话术', desc: '培训员工如何自然地向游客递送地图并介绍。', completed: false },
+
+            // In-store Deployment (店内安排部署)
+            { id: 't7', phase: 'cat_store', content: '全员喊堂演练', desc: '早会练习"来了您嘞！"确保声浪有气势。', completed: false },
+            { id: 't8', phase: 'cat_store', content: '工服定制', desc: '印制"专注泡馍15年"字样的统一工服。', completed: false },
+            { id: 't9', phase: 'cat_store', content: '桌贴物料', desc: '每张桌子贴上"正宗掰馍手势"教学二维码。', completed: false }
         ];
 
         const PHASES = [
-            { id: 'p1', title: 'Phase 1: 基础建设 (Day 1-3)', color: 'var(--system-indigo)', num: '01' },
-            { id: 'p2', title: 'Phase 2: 练兵 & 铺量 (Day 4-7)', color: 'var(--system-orange)', num: '02' },
-            { id: 'p3', title: 'Phase 3: 饱和攻击 (Day 8-15)', color: 'var(--system-red)', num: '03' }
+            { id: 'cat_online', title: '线上营销 (Online)', color: 'var(--system-indigo)', num: '01' },
+            { id: 'cat_offline', title: '线下推广 (Offline)', color: 'var(--system-orange)', num: '02' },
+            { id: 'cat_store', title: '店内安排部署 (In-store)', color: 'var(--system-teal)', num: '03' }
         ];
 
         let taskList = []; // The main source of truth
         let dbObject = null;
-        const SYNC_ID = 'tieyixiang_v2_dynamic'; // Version bump for new schema
+        const SYNC_ID = 'tieyixiang_v3_categories'; // Version bump for new schema
 
         async function initApp() {
             // 1. Init LeanCloud
