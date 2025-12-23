@@ -21,36 +21,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (timerEl) timerEl.innerText = "⏳ 正在同步云端...";
 
             const query = new AV.Query('TieYixiangGlobalSettings');
-            query.equalTo('settingVersion', 3); // Force fresh sync for Beijing Time fix
+            query.equalTo('settingVersion', 4); // Force fresh sync for Robust Fix
             const results = await query.find();
 
             if (results.length > 0) {
                 const settings = results[0];
                 const savedStart = settings.get('campaignStartTime');
                 if (timerEl) {
-                    // Flash success briefly or just start
-                    const dateStr = savedStart.toLocaleDateString();
-                    console.log(`Synced to: ${dateStr}`);
+                    // Just Log
+                    console.log(`Synced to: ${savedStart.toLocaleString()}`);
                 }
                 return new Date(savedStart.getTime() + (20 * 24 * 60 * 60 * 1000));
             } else {
-                console.log("Initializing Global Deadline (Beijing Time v3)...");
+                console.log("Initializing Global Deadline (Strict Beijing V4)...");
                 const SettingsClass = AV.Object.extend('TieYixiangGlobalSettings');
                 const settings = new SettingsClass();
 
-                // Calculate Beijing Midnight (UTC+8) strictly
+                // ROBUST FORMULA: Ignore local timezone, treat UTC as Number
                 const now = new Date();
-                const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000); // Current global UTC
-                const beijingTime = nowUTC + (8 * 60 * 60 * 1000); // Shift to Beijing frame
-                const beijingMidnight = beijingTime - (beijingTime % (24 * 60 * 60 * 1000)); // Floor to start of day
-                const globalMidnight = beijingMidnight - (8 * 60 * 60 * 1000); // Shift back to UTC
+                const utc = now.getTime(); // Pure UTC timestamp
+                const beijingOffset = 8 * 60 * 60 * 1000; // +8 Hours
+                const beijingTime = utc + beijingOffset;
+                // Floor to start of day in Beijing context
+                const beijingMidnight = beijingTime - (beijingTime % (24 * 60 * 60 * 1000));
+                // Convert back to UTC timestamp
+                const startTimestamp = beijingMidnight - beijingOffset;
 
-                const startObj = new Date(globalMidnight);
+                const startObj = new Date(startTimestamp);
 
                 settings.set('campaignStartTime', startObj);
-                settings.set('settingVersion', 3); // Version Tag
+                settings.set('settingVersion', 4);
 
-                // Essential Permissions
                 const acl = new AV.ACL();
                 acl.setPublicReadAccess(true);
                 acl.setPublicWriteAccess(true);
@@ -64,18 +65,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const timerEl = document.getElementById('countdown-timer');
             if (timerEl) {
                 timerEl.innerHTML = `<span style="font-size:14px; color:red;">云同步失败: ${e.message || "Network"}</span>`;
-                // Wait 3s then fallback
                 await new Promise(r => setTimeout(r, 3000));
             }
 
-            // Fallback: Attempt local Beijing Midnight calculation
+            // Fallback (Same robust logic)
             const now = new Date();
-            const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const beijingTime = nowUTC + (8 * 60 * 60 * 1000);
+            const utc = now.getTime();
+            const beijingOffset = 8 * 60 * 60 * 1000;
+            const beijingTime = utc + beijingOffset;
             const beijingMidnight = beijingTime - (beijingTime % (24 * 60 * 60 * 1000));
-            const globalMidnight = beijingMidnight - (8 * 60 * 60 * 1000);
+            const startTimestamp = beijingMidnight - beijingOffset;
 
-            return new Date(globalMidnight + (20 * 24 * 60 * 60 * 1000));
+            return new Date(startTimestamp + (20 * 24 * 60 * 60 * 1000));
         }
     }
 
