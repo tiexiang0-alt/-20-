@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>决战清单 · 铁毅祥20天计划</title>
     <link rel="stylesheet" href="style.css">
+    <!-- LeanCloud SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
     <style>
         /* CHECKLIST STYLES */
         .phase-header {
@@ -112,11 +114,38 @@
             width: 0%;
             transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* SYNC STATUS BADGE */
+        .sync-badge {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .sync-active {
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body class="ios-theme sub-page" style="padding-bottom: 100px;">
     <div class="background-mesh mesh-blue"></div>
+
+    <div class="sync-badge" id="sync-status">
+        <span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span>
+        已同步 LeanCloud
+    </div>
 
     <nav class="top-nav">
         <a href="index.html" class="back-btn">← 返回指挥中心</a>
@@ -127,8 +156,8 @@
 
         <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 10px;">行动指挥部</h1>
         <p style="color: var(--text-secondary); margin-bottom: 30px;">
-            您的战役进度将自动保存在本设备。<br>
-            <span style="font-size:12px; opacity:0.7;">(数据存储于 LocalStorage)</span>
+            多端实时同步中 (LeanCloud Serverless)<br>
+            <span style="font-size:12px; opacity:0.7;">AppID: Ru4pzaoo...</span>
         </p>
 
         <!-- Phase 1 -->
@@ -231,53 +260,103 @@
     </div>
 
     <script>
-        // --- PERSISTENCE LOGIC ---
-        const DB_KEY = 'tieyixiang_checklist_v1';
+        // ----------------------------------------------------
+        // LEANCLOUD INIT (Serverless Database)
+        // ----------------------------------------------------
+        AV.init({
+            appId: "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI",
+            appKey: "KJf0DXD0lmOMn1PJDb3fMUN5",
+            serverURL: "https://ru4pzaoo.api.lncldglobal.com"
+        });
 
-        // 1. Load State on Init
-        function loadState() {
-            const saved = JSON.parse(localStorage.getItem(DB_KEY)) || {};
+        const SYNC_ID = 'tieyixiang_v1'; // Single Singleton Object ID for simplicity
+
+        let globalState = {};
+        let dbObject = null;
+
+        // 1. Fetch Cloud State
+        async function fetchCloud() {
+            const query = new AV.Query('ChecklistState');
+            query.equalTo('syncId', SYNC_ID);
+            try {
+                const results = await query.find();
+                if (results.length > 0) {
+                    dbObject = results[0];
+                    globalState = dbObject.get('data') || {};
+                    applyStateToDOM(globalState);
+                    showSyncStatus();
+                } else {
+                    // Create new if not exists
+                    const ChecklistState = AV.Object.extend('ChecklistState');
+                    dbObject = new ChecklistState();
+                    dbObject.set('syncId', SYNC_ID);
+                    dbObject.set('data', {});
+                    await dbObject.save();
+                }
+            } catch (error) {
+                console.error("Cloud Error:", error);
+                // Fallback to local
+                globalState = JSON.parse(localStorage.getItem('tie_local_backup')) || {};
+                applyStateToDOM(globalState);
+            }
+        }
+
+        // 2. Apply State to UI
+        function applyStateToDOM(state) {
             const items = document.querySelectorAll('.task-item');
             let completedCount = 0;
 
             items.forEach(item => {
-                // Extract ID from onclick attribute string (simple parser)
                 const onclickStr = item.getAttribute('onclick');
                 const idMatch = onclickStr.match(/'([^']+)'/);
                 if (idMatch && idMatch[1]) {
                     const taskId = idMatch[1];
-                    if (saved[taskId]) {
+                    if (state[taskId]) {
                         item.classList.add('completed');
                         completedCount++;
+                    } else {
+                        item.classList.remove('completed');
                     }
                 }
             });
             updateProgress(completedCount, items.length);
         }
 
-        // 2. Toggle Function
-        function toggleTask(el, taskId) {
+        // 3. Toggle & Save
+        window.toggleTask = async (el, taskId) => {
             el.classList.toggle('completed');
 
-            // Save to Storage
-            const saved = JSON.parse(localStorage.getItem(DB_KEY)) || {};
+            // Update Local State
             if (el.classList.contains('completed')) {
-                saved[taskId] = true;
+                globalState[taskId] = true;
             } else {
-                delete saved[taskId];
-            }
-            localStorage.setItem(DB_KEY, JSON.stringify(saved));
-
-            // Visual Haptic
-            if (window.navigator && window.navigator.vibrate) {
-                window.navigator.vibrate(50); // Haptic feedback on mobile
+                delete globalState[taskId];
             }
 
-            // Update Progress
+            // Update UI immediately (Optimistic UI)
             const items = document.querySelectorAll('.task-item');
             const done = document.querySelectorAll('.task-item.completed').length;
             updateProgress(done, items.length);
-        }
+
+            // Save to Local Backup
+            localStorage.setItem('tie_local_backup', JSON.stringify(globalState));
+
+            // Save to Cloud
+            if (dbObject) {
+                dbObject.set('data', globalState);
+                try {
+                    await dbObject.save();
+                    showSyncStatus();
+                } catch (e) {
+                    console.error("Save failed", e);
+                }
+            }
+
+            // Haptic
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+        };
 
         function updateProgress(done, total) {
             const pct = Math.round((done / total) * 100);
@@ -285,8 +364,18 @@
             document.getElementById('progress-text').innerText = pct + '%';
         }
 
-        // Run
-        loadState();
+        function showSyncStatus() {
+            const el = document.getElementById('sync-status');
+            el.classList.add('sync-active');
+            setTimeout(() => el.classList.remove('sync-active'), 2000);
+        }
+
+        // Init
+        fetchCloud();
+
+        // Optional: Polling for updates from other devices (Poor man's real-time)
+        setInterval(fetchCloud, 5000);
+
     </script>
 </body>
 
