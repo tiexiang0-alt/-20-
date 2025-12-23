@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>铁毅祥·店务管理系统</title>
+    <!-- LeanCloud SDK -->
+    <script src="https://unpkg.com/leancloud-storage@4.12.0/dist/av-min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* UNIQUE STYLES FOR STAFF PORTAL */
+        .staff-header {
+            text-align: center;
+            padding: 40px 20px 20px;
+        }
+
+        .staff-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .audit-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .audit-row:last-child {
+            border-bottom: none;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 4px;
+            color: #ddd;
+            cursor: pointer;
+        }
+
+        .star-rating .active {
+            color: var(--system-orange);
+        }
+
+        .emp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            /* 4 cols for avatars */
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .emp-avatar {
+            aspect-ratio: 1;
+            background: #eee;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .emp-avatar.active {
+            border-color: var(--system-blue);
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--system-blue);
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.05);
+            border: 2px dashed rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .role-tag {
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: #eee;
+            color: #666;
+        }
+
+        /* Delete Mode */
+        .delete-mode .audit-row::before {
+            content: '⛔';
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Mesh -->
+    <div class="background-mesh"></div>
+
+    <div class="home-container" style="padding-top: 60px;">
+        <div class="staff-header">
+            <h1 style="font-size: 24px;">🛡️ 店务指挥中心</h1>
+            <p style="color:var(--text-secondary); font-size:13px; margin-top:5px;">Manager & Staff Portal</p>
+        </div>
+
+        <!-- MANAGER VIEW -->
+        <div id="manager-view">
+            <!-- 1. Store Metrics -->
+            <div class="glass-card staff-card">
+                <h3 style="margin-bottom:15px; display:flex; justify-content:space-between;">
+                    店铺今日评分
+                    <span style="font-size:12px; color:var(--system-blue);" onclick="saveDailyScore()">保存</span>
+                </h3>
+
+                <div class="audit-row">
+                    <span>🧹 卫生环境</span>
+                    <div class="star-rating" data-cat="hygiene">
+                        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                </div>
+                <div class="audit-row">
+                    <span>🍲 出品味道</span>
+                    <div class="star-rating" data-cat="taste">
+                        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                </div>
+                <div class="audit-row">
+                    <span>smile 服务态度</span>
+                    <div class="star-rating" data-cat="service">
+                        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Dynamic Checklist -->
+            <div class="glass-card staff-card">
+                <h3 style="margin-bottom:15px; display:flex; justify-content:space-between;">
+                    每日巡检清单
+                    <span id="edit-toggle" style="font-size:12px; color:var(--text-secondary);"
+                        onclick="toggleEditMode()">编辑</span>
+                </h3>
+                <div id="checklist-container">
+                    <!-- Dynamic Items will load here -->
+                    <div style="text-align:center; color:#999; padding:20px;">加载中...</div>
+                </div>
+                <button class="add-btn" onclick="addNewItem()">+ 添加新检查项</button>
+            </div>
+
+            <!-- 3. Employee Roster -->
+            <div class="glass-card staff-card">
+                <h3>员工管理 (20人)</h3>
+                <div class="emp-grid" id="staff-grid">
+                    <!-- Dynamic Avatars -->
+                </div>
+            </div>
+        </div>
+
+        <!-- EMPLOYEE VIEW (Hidden by default) -->
+        <div id="employee-view" style="display:none;">
+            <div class="glass-card staff-card" style="border-top: 4px solid var(--system-blue);">
+                <button onclick="exitEmployeeMode()"
+                    style="float:right; border:none; background:none; font-size:20px;">×</button>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="emp-avatar active" style="width:50px; height:50px; font-size:18px;"
+                        id="current-emp-avatar">E</div>
+                    <div>
+                        <h2 id="current-emp-name" style="font-size:18px;">员工姓名</h2>
+                        <span id="current-emp-role" class="role-tag">岗位</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card staff-card">
+                <h3>今日个人任务</h3>
+                <div id="personal-tasks">
+                    <!-- Personal Tasks -->
+                </div>
+                <button class="add-btn" onclick="addPersonalTask()">+ 指派任务</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. CONFIG ---
+        const CONFIG = {
+            appId: "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI",
+            appKey: "KJF0dXD0lmOMn1PJDb3fMUN5",
+            serverURLs: "https://ru4pzaoo.api.lncdglobal.com"
+        };
+        AV.init(CONFIG);
+
+        // --- 2. STATE ---
+        let isEditMode = false;
+        let checklistData = [];
+        let currentEmpId = null;
+
+        // --- 3. INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initStaffData(); // Ensure 20 employees exist
+            await renderStaffGrid();
+            await loadChecklist();
+
+            // Check URL for ?id=
+            const urlParams = new URLSearchParams(window.location.search);
+            const empId = urlParams.get('id');
+            if (empId) {
+                openEmployeeView(empId);
+            }
+
+            setupStarRating();
+        });
+
+        // --- 4. CORE FUNCTIONS ---
+
+        // A. Staff Grid (20 Slots)
+        async function initStaffData() {
+            // In a real app, query Cloud. For demo, we Mock 20 IDs if empty.
+            // We just render 1-20 for now.
+        }
+
+        async function renderStaffGrid() {
+            const grid = document.getElementById('staff-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const id = `EMP_${String(i).padStart(2, '0')}`;
+                const div = document.createElement('div');
+                div.className = 'emp-avatar';
+                div.innerText = i;
+                div.onclick = () => {
+                    window.location.href = `staff.html?id=${id}`;
+                };
+                grid.appendChild(div);
+            }
+        }
+
+        // B. Checklist CRUD
+        async function loadChecklist() {
+            const container = document.getElementById('checklist-container');
+            container.innerHTML = '⏳ 同步中...';
+
+            try {
+                const query = new AV.Query('ManagerChecklist');
+                query.ascending('createdAt');
+                const results = await query.find();
+
+                if (results.length === 0) {
+                    await seedDefaultChecklist();
+                    return loadChecklist(); // Retry
+                }
+
+                checklistData = results;
+                renderChecklist();
+            } catch (e) {
+                // If Class not found, seed it
+                if (e.code === 101) {
+                    await seedDefaultChecklist();
+                    loadChecklist();
+                } else {
+                    container.innerHTML = `<span style="color:red">Error: ${e.message}</span>`;
+                }
+            }
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklist-container');
+            container.innerHTML = '';
+
+            checklistData.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'audit-row';
+                if (isEditMode) row.style.background = "rgba(255,0,0,0.05)";
+
+                // Content
+                const label = document.createElement('span');
+                label.innerText = item.get('content');
+
+                // Action (Checkbox or Delete)
+                const action = document.createElement('div');
+
+                if (isEditMode) {
+                    action.innerHTML = '🗑️';
+                    action.style.cursor = 'pointer';
+                    action.onclick = () => deleteItem(item.id);
+                } else {
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = item.get('isDone') || false;
+                    cb.onchange = (e) => toggleDone(item, e.target.checked);
+                    action.appendChild(cb);
+                }
+
+                row.appendChild(label);
+                row.appendChild(action);
+                container.appendChild(row);
+            });
+        }
+
+        async function addNewItem() {
+            const text = prompt("输入新的检查项内容 (例如: '检查后厨地漏')");
+            if (!text) return;
+
+            const Item = AV.Object.extend('ManagerChecklist');
+            const item = new Item();
+            item.set('content', text);
+            item.set('isDone', false);
+
+            // Set Public ACL
+            const acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            item.setACL(acl);
+
+            await item.save();
+            loadChecklist();
+        }
+
+        async function deleteItem(id) {
+            if (!confirm("确定删除此项?")) return;
+            const item = AV.Object.createWithoutData('ManagerChecklist', id);
+            await item.destroy();
+            loadChecklist();
+        }
+
+        async function toggleDone(item, status) {
+            item.set('isDone', status);
+            await item.save();
+        }
+
+        async function seedDefaultChecklist() {
+            const defaults = ["前厅地面无垃圾", "后厨案板归位", "员工工服整洁", "灯箱广告全亮"];
+            const promises = defaults.map(text => {
+                const Item = AV.Object.extend('ManagerChecklist');
+                const item = new Item();
+                item.set('content', text);
+                item.set('isDone', false);
+                const acl = new AV.ACL();
+                acl.setPublicReadAccess(true);
+                acl.setPublicWriteAccess(true);
+                item.setACL(acl);
+                return item.save();
+            });
+            await Promise.all(promises);
+        }
+
+        // C. Employee View Logic
+        function openEmployeeView(id) {
+            document.getElementById('manager-view').style.display = 'none';
+            document.getElementById('employee-view').style.display = 'block';
+            document.querySelector('.staff-header h1').innerText = "👤 个人工作台";
+
+            currentEmpId = id;
+            document.getElementById('current-emp-name').innerText = `员工 ${id.split('_')[1]}号`;
+
+            loadPersonalTasks(id);
+        }
+
+        function exitEmployeeMode() {
+            window.location.href = "staff.html"; // Reload to clear params
+        }
+
+        async function loadPersonalTasks(empId) {
+            const container = document.getElementById('personal-tasks');
+            container.innerHTML = "加载中...";
+
+            const query = new AV.Query('EmployeeTask');
+            query.equalTo('employeeId', empId);
+            const results = await query.find();
+
+            container.innerHTML = '';
+            if (results.length === 0) {
+                container.innerHTML = '<div style="color:#999; text-align:center; padding:10px;">暂无指派任务</div>';
+            }
+
+            results.forEach(task => {
+                // Render tasks similar to checklist...
+                // Simplified for this demo
+                const p = document.createElement('div');
+                p.className = 'audit-row';
+                p.innerHTML = `<span>${task.get('content')}</span> <input type="checkbox" ${task.get('isDone') ? 'checked' : ''}>`;
+                container.appendChild(p);
+            });
+        }
+
+        async function addPersonalTask() {
+            const text = prompt("指派任务内容:");
+            if (!text) return;
+
+            const Task = AV.Object.extend('EmployeeTask');
+            const t = new Task();
+            t.set('content', text);
+            t.set('employeeId', currentEmpId);
+            t.set('isDone', false);
+
+            const acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            t.setACL(acl);
+
+            await t.save();
+            loadPersonalTasks(currentEmpId);
+        }
+
+        // D. Helpers
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.getElementById('edit-toggle').innerText = isEditMode ? "完成" : "编辑";
+            document.getElementById('edit-toggle').style.color = isEditMode ? "red" : "var(--text-secondary)";
+            renderChecklist();
+        }
+
+        function setupStarRating() {
+            document.querySelectorAll('.star-rating').forEach(el => {
+                const stars = el.children;
+                for (let i = 0; i < stars.length; i++) {
+                    stars[i].onclick = () => {
+                        // Reset
+                        for (let j = 0; j < stars.length; j++) stars[j].classList.remove('active');
+                        // Set
+                        for (let j = 0; j <= i; j++) stars[j].classList.add('active');
+                    };
+                }
+            });
+        }
+
+        function saveDailyScore() {
+            alert("今日评分已保存！(Mock)");
+        }
+
+    </script>
+</body>
+
+</html>
