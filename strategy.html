@@ -148,10 +148,26 @@
             <div style="display:flex; gap:10px; margin-bottom:20px;">
                 <input type="text" id="memo-input" placeholder="输入备忘内容 (如: 羊肉要切厚一点...)"
                     style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); background:rgba(255,255,255,0.5);">
-                <button onclick="addMemo()"
+
+                <!-- Voice Button -->
+                <button id="mic-btn" onclick="toggleRecording()"
+                    style="width:44px; padding:0; background:rgba(0,0,0,0.05); color:#333; border:none; border-radius:12px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.3s;">
+                    🎙️
+                </button>
+
+                <button id="add-btn" onclick="addMemo()"
                     style="padding:12px 20px; background:var(--system-blue); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer;">
                     + 记录
                 </button>
+            </div>
+
+            <!-- Recording Status -->
+            <div id="recording-status"
+                style="display:none; align-items:center; gap:10px; margin-bottom:15px; padding:10px; background:rgba(255,59,48,0.1); border-radius:8px; color:#FF3B30;">
+                <div
+                    style="width:10px; height:10px; background:#FF3B30; border-radius:50%; animation: pulse 1s infinite;">
+                </div>
+                <span style="font-size:12px; font-weight:600;">正在录音... (再次点击麦克风结束并发送)</span>
             </div>
 
             <!-- List -->
@@ -170,6 +186,9 @@
             appKey: "KJF0dXD0lmOMn1PJDb3fMUN5",
             serverURLs: "https://ru4pzaoo.api.lncldglobal.com"
         };
+        // Global Record Variables
+        let mediaRecorder;
+        let audioChunks = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Polling for AV init (Wait max 5s)
@@ -183,10 +202,100 @@
                     loadMemosWithRetry(3); // Start Loading with 3 Retries
                 } else if (attempts > 50) { // 5s timeout
                     clearInterval(initInterval);
-                    document.getElementById('memo-list').innerHTML = '<div style="color:red; text-align:center;">SDK Load Timeout</div>';
+                    const errHTML = '<div style="color:red; text-align:center;">SDK Load Timeout</div>';
+                    document.getElementById('memo-list').innerHTML = errHTML;
                 }
             }, 100);
         });
+
+        // --- RECORDING LOGIC ---
+        async function toggleRecording() {
+            const btn = document.getElementById('mic-btn');
+            const status = document.getElementById('recording-status');
+            const input = document.getElementById('memo-input');
+            const addBtn = document.getElementById('add-btn');
+
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                // START RECORDING
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        await uploadVoiceMemo(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+
+                    // UI Update
+                    btn.style.background = '#FF3B30';
+                    btn.style.color = '#fff';
+                    btn.innerHTML = '⏹';
+                    status.style.display = 'flex';
+                    input.disabled = true;
+                    addBtn.disabled = true;
+
+                } catch (e) {
+                    alert('无法访问麦克风: ' + e.message);
+                }
+            } else {
+                // STOP RECORDING
+                mediaRecorder.stop();
+
+                // UI Reset
+                btn.style.background = 'rgba(0,0,0,0.05)';
+                btn.style.color = '#333';
+                btn.innerHTML = '🎙️';
+                status.style.display = 'none';
+                input.disabled = false;
+                addBtn.disabled = false;
+
+                // Show loading
+                const container = document.getElementById('memo-list');
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'voice-uploading';
+                loadingDiv.innerHTML = '<div style="text-align:center; padding:10px; color:#999;">🎙️ 正在上传语音...</div>';
+                container.prepend(loadingDiv);
+            }
+        }
+
+        async function uploadVoiceMemo(blob) {
+            try {
+                // 1. Upload File
+                const file = new AV.File('voice_memo.webm', blob);
+                const savedFile = await file.save();
+
+                // 2. Create Memo Object
+                const Memo = AV.Object.extend('StrategyMemo');
+                const memo = new Memo();
+                memo.set('content', '[语音备忘]');
+                memo.set('audio', savedFile.url()); // Store URL
+                memo.set('isVoice', true);
+
+                const acl = new AV.ACL();
+                acl.setPublicReadAccess(true);
+                acl.setPublicWriteAccess(true);
+                memo.setACL(acl);
+
+                await memo.save();
+
+                // 3. Remove Loading & Refresh
+                const loadingDiv = document.getElementById('voice-uploading');
+                if (loadingDiv) loadingDiv.remove();
+                loadMemosWithRetry(3);
+
+            } catch (e) {
+                alert("语音上传失败: " + e.message);
+                const loadingDiv = document.getElementById('voice-uploading');
+                if (loadingDiv) loadingDiv.remove();
+            }
+        }
 
         async function loadMemosWithRetry(retries) {
             const container = document.getElementById('memo-list');
@@ -210,11 +319,22 @@
                 results.forEach(memo => {
                     const div = document.createElement('div');
                     div.className = 'verbatim-box';
-                    div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(255,255,255,0.6);';
-                    div.innerHTML = `
-                        <span style="font-size:14px; color:#333;">${memo.get('content')}</span>
-                        <button onclick="deleteMemo('${memo.id}')" style="background:none; border:none; color:#ccc; font-size:12px; padding:5px; cursor:pointer;">🗑️</button>
-                    `;
+                    div.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-bottom:8px; background:rgba(255,255,255,0.6); padding:12px;';
+
+                    const content = memo.get('content');
+                    const audioUrl = memo.get('audio');
+                    const date = memo.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    let html = `<div style="display:flex; justify-content:space-between; width:100%;">
+                        <span style="font-size:14px; color:#333;">${content} <span style="font-size:10px; color:#999; margin-left:5px;">${date}</span></span>
+                        <button onclick="deleteMemo('${memo.id}')" style="background:none; border:none; color:#ccc; font-size:12px; cursor:pointer;">🗑️</button>
+                    </div>`;
+
+                    if (audioUrl) {
+                        html += `<audio controls src="${audioUrl}" style="width:100%; height:32px; margin-top:5px;"></audio>`;
+                    }
+
+                    div.innerHTML = html;
                     container.appendChild(div);
                 });
             } catch (e) {
