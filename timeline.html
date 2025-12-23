@@ -194,105 +194,23 @@
 
     <main class="content-scroll">
 
-        <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 10px;">行动指挥部</h1>
-        <p style="color: var(--text-secondary); margin-bottom: 30px;">
-            多端实时同步中 (LeanCloud Serverless)<br>
-            <span style="font-size:12px; opacity:0.7;">同步状态正常 (Serverless DB)</span>
+        <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 5px;">行动指挥部</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 14px;">
+            全员协作模式 · 任何变动将实时同步<br>
+            <span style="font-size:12px; opacity:0.75; color:var(--system-green);">● Public Live Sync Enabled</span>
         </p>
 
-        <!-- Phase 1 -->
-        <section class="glass-sheet">
-            <div class="phase-header">
-                <span>Phase 1: 基础建设 (Day 1-3)</span>
-                <span class="section-marker" style="font-size:12px; width:24px; height:24px;">01</span>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p1_1')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">大众点评维护</div>
-                    <div class="task-desc">确保评分稳定在4.7+，回复最新3条差评。</div>
-                </div>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p1_2')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">物料准备</div>
-                    <div class="task-desc">定制"15年老店"工服，制作"不踩雷"桌贴。</div>
-                </div>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p1_3')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">小红书账号搭建</div>
-                    <div class="task-desc">注册官方号，完成企业蓝V认证。</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Phase 2 -->
-        <section class="glass-sheet">
-            <div class="phase-header">
-                <span style="color:var(--system-orange);">Phase 2: 练兵 & 铺量 (Day 4-7)</span>
-                <span class="section-marker" style="font-size:12px; width:24px; height:24px;">02</span>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p2_1')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">全员喊堂演练 (早会)</div>
-                    <div class="task-desc">确保每一位进店顾客都能听到"来了您嘞！"</div>
-                </div>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p2_2')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">首批达人探店 (3人)</div>
-                    <div class="task-desc">邀请3位KOC进店拍摄，测试脚本流程。</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Phase 3 -->
-        <section class="glass-sheet">
-            <div class="phase-header">
-                <span style="color:var(--system-red);">Phase 3: 饱和攻击 (Day 8-15)</span>
-                <span class="section-marker" style="font-size:12px; width:24px; height:24px;">03</span>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p3_1')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">发布"避坑指南"笔记</div>
-                    <div class="task-desc">在小红书发布3篇搜索截流笔记 (含关键词)。</div>
-                </div>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p3_2')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">抖音KOC矩阵爆发</div>
-                    <div class="task-desc">8-10位达人视频集中发布，占领同城页。</div>
-                </div>
-            </div>
-
-            <div class="task-item" onclick="toggleTask(this, 'p3_3')">
-                <div class="checkbox"></div>
-                <div class="task-content">
-                    <div class="task-title">投流赛马</div>
-                    <div class="task-desc">筛选2条优质视频，投放DOU+ (各¥500)。</div>
-                </div>
-            </div>
-        </section>
+        <!-- Dynamic Container Logic -->
+        <!-- We will render these sections via JS to allow dynamic modification -->
+        <div id="phases-container">
+            <!-- JS will inject content here -->
+        </div>
 
     </main>
 
     <!-- FLOATING PROGRESS -->
     <div class="progress-bar-container">
-        <span style="font-size:12px; font-weight:700; color:var(--text-secondary);">总体进度</span>
+        <span style="font-size:12px; font-weight:700; color:var(--text-secondary);">总体战况</span>
         <div class="progress-track">
             <div class="progress-fill" id="total-progress"></div>
         </div>
@@ -300,40 +218,55 @@
     </div>
 
     <script>
+        // ----------------------------------------------------
+        // UTILS: Add/Delete UI Helpers
+        // ----------------------------------------------------
+        function createAddButton(phaseId) {
+            return `<div onclick="addNewTask('${phaseId}')" 
+                style="padding:10px 0; color:var(--system-blue); font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; opacity:0.8; transition:opacity 0.2s;">
+                <span style="background:rgba(0,122,255,0.1); width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:8px;">+</span>
+                添加新任务...
+            </div>`;
+        }
+
+        function createTrashIcon(taskId) {
+            return `<div onclick="deleteTask(event, '${taskId}')" class="trash-btn"
+                style="margin-left:auto; padding:8px; color:#999; cursor:pointer;">
+                ✕
+            </div>`;
+        }
+
         // Inject Settings Button into Nav
         setTimeout(() => {
             const nav = document.querySelector('.top-nav');
-            const btn = document.createElement('div');
-            btn.innerHTML = '⚙️';
-            btn.style.cursor = 'pointer';
-            btn.style.fontSize = '20px';
-            btn.onclick = () => {
-                document.getElementById('settings-panel').style.display = 'flex';
-                // Pre-fill
-                const cfg = getCloudConfig();
-                document.getElementById('cfg-appid').value = cfg.appId || "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI";
-                document.getElementById('cfg-appkey').value = cfg.appKey || "KJF0DXD0lmOMn1PJDb3fMUN5"; // Fixed Typo
-                document.getElementById('cfg-server').value = cfg.serverURL || "https://ru4pzaoo.api.lncldglobal.com";
-            };
-            nav.appendChild(btn);
+            if (nav) {
+                const btn = document.createElement('div');
+                btn.innerHTML = '⚙️';
+                btn.style.cursor = 'pointer';
+                btn.style.fontSize = '20px';
+                btn.onclick = () => {
+                    document.getElementById('settings-panel').style.display = 'flex';
+                    const cfg = getCloudConfig();
+                    document.getElementById('cfg-appid').value = cfg.appId || "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI";
+                    document.getElementById('cfg-appkey').value = cfg.appKey || "KJF0dXD0lmOMn1PJDb3fMUN5";
+                    document.getElementById('cfg-server').value = cfg.serverURL || "https://ru4pzaoo.api.lncldglobal.com";
+                };
+                nav.appendChild(btn);
+            }
         }, 500);
 
         // ----------------------------------------------------
-        // LEANCLOUD INIT (Serverless Database)
+        // LEANCLOUD CONFIG
         // ----------------------------------------------------
-
-        // Corrected Defaults from Screenshot (Fixing 'f' -> 'F')
         const DEFAULT_CONFIG = {
             appId: "Ru4pzaooijH8G6ICWOJEirUj-MdYXbMMI",
-            appKey: "KJF0DXD0lmOMn1PJDb3fMUN5", // CORRECTED
+            appKey: "KJF0dXD0lmOMn1PJDb3fMUN5",
             serverURL: "https://ru4pzaoo.api.lncldglobal.com"
         };
 
         function getCloudConfig() {
             const saved = localStorage.getItem('tie_cloud_config');
             if (saved) return JSON.parse(saved);
-
-            // If no saved config, use default but also SAVE IT immediately so it persists
             localStorage.setItem('tie_cloud_config', JSON.stringify(DEFAULT_CONFIG));
             return DEFAULT_CONFIG;
         }
@@ -348,156 +281,237 @@
             window.location.reload();
         }
 
-        // INIT
-        try {
-            const cfg = getCloudConfig();
-            AV.init({
-                appId: cfg.appId,
-                appKey: cfg.appKey,
-                serverURL: cfg.serverURL
-            });
-            console.log("AV Init with", cfg);
-        } catch (e) {
-            console.error("Init Error", e);
+        // ----------------------------------------------------
+        // APP STATE & LOGIC
+        // ----------------------------------------------------
+
+        // Initial Default Data (If Cloud is Empty)
+        const DEFAULT_TASKS = [
+            // Phase 1
+            { id: 't1', phase: 'p1', content: '大众点评维护', desc: '确保评分稳定在4.7+，回复最新3条差评。', completed: false },
+            { id: 't2', phase: 'p1', content: '物料准备', desc: '定制"15年老店"工服，制作"不踩雷"桌贴。', completed: false },
+            { id: 't3', phase: 'p1', content: '小红书账号搭建', desc: '注册官方号，完成企业蓝V认证。', completed: false },
+            // Phase 2
+            { id: 't4', phase: 'p2', content: '全员喊堂演练 (早会)', desc: '确保每一位进店顾客都能听到"来了您嘞！"', completed: false },
+            { id: 't5', phase: 'p2', content: '首批达人探店 (3人)', desc: '邀请3位KOC进店拍摄，测试脚本流程。', completed: false },
+            // Phase 3
+            { id: 't6', phase: 'p3', content: '发布"避坑指南"笔记', desc: '在小红书发布3篇搜索截流笔记 (含关键词)。', completed: false },
+            { id: 't7', phase: 'p3', content: '抖音KOC矩阵爆发', desc: '8-10位达人视频集中发布，占领同城页。', completed: false },
+            { id: 't8', phase: 'p3', content: '投流赛马', desc: '筛选2条优质视频，投放DOU+ (各¥500)。', completed: false }
+        ];
+
+        const PHASES = [
+            { id: 'p1', title: 'Phase 1: 基础建设 (Day 1-3)', color: 'var(--system-indigo)', num: '01' },
+            { id: 'p2', title: 'Phase 2: 练兵 & 铺量 (Day 4-7)', color: 'var(--system-orange)', num: '02' },
+            { id: 'p3', title: 'Phase 3: 饱和攻击 (Day 8-15)', color: 'var(--system-red)', num: '03' }
+        ];
+
+        let taskList = []; // The main source of truth
+        let dbObject = null;
+        const SYNC_ID = 'tieyixiang_v2_dynamic'; // Version bump for new schema
+
+        async function initApp() {
+            // 1. Init LeanCloud
+            try {
+                const cfg = getCloudConfig();
+                AV.init(cfg);
+            } catch (e) { console.error("AV Init", e); }
+
+            // 2. Fetch or Create
+            await fetchCloud();
         }
 
-        const SYNC_ID = 'tieyixiang_v1';
-        let globalState = {};
-        let dbObject = null;
+        function render() {
+            const container = document.getElementById('phases-container');
+            container.innerHTML = ''; // Wipe
 
-        // 1. Fetch Cloud State
+            let totalTasks = 0;
+            let completedTasks = 0;
+
+            PHASES.forEach(phase => {
+                // Filter tasks for this phase
+                const phaseTasks = taskList.filter(t => t.phase === phase.id);
+
+                // Build Phase HTML
+                const section = document.createElement('section');
+                section.className = 'glass-sheet';
+
+                let tasksHtml = '';
+                phaseTasks.forEach(task => {
+                    totalTasks++;
+                    if (task.completed) completedTasks++;
+
+                    const checkedClass = task.completed ? 'completed' : '';
+                    tasksHtml += `
+                        <div class="task-item ${checkedClass}" onclick="toggleTask('${task.id}')">
+                            <div class="checkbox"></div>
+                            <div class="task-content">
+                                <div class="task-title">${task.content}</div>
+                                ${task.desc ? `<div class="task-desc">${task.desc}</div>` : ''}
+                            </div>
+                            <div onclick="deleteTask(event, '${task.id}')" style="padding:10px; opacity:0.3; font-size:14px; margin-right:-10px;">✕</div>
+                        </div>
+                    `;
+                });
+
+                section.innerHTML = `
+                    <div class="phase-header">
+                        <span style="color:${phase.color}">${phase.title}</span>
+                        <span class="section-marker" style="font-size:12px; width:24px; height:24px;">${phase.num}</span>
+                    </div>
+                    ${tasksHtml}
+                    ${createAddButton(phase.id)}
+                `;
+                container.appendChild(section);
+            });
+
+            // Update Progress
+            const pct = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+            document.getElementById('total-progress').style.width = pct + '%';
+            document.getElementById('progress-text').innerText = pct + '%';
+        }
+
+        // --- ACTIONS ---
+
+        window.toggleTask = (taskId) => {
+            const task = taskList.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                saveToCloud(); // Auto save
+                render();
+                if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(50);
+            }
+        };
+
+        window.addNewTask = (phaseId) => {
+            const content = prompt("请输入新任务名称:");
+            if (content) {
+                const desc = prompt("请输入任务描述(可选):") || "";
+                const newTask = {
+                    id: 't_' + Date.now(),
+                    phase: phaseId,
+                    content: content,
+                    desc: desc,
+                    completed: false
+                };
+                taskList.push(newTask);
+                saveToCloud();
+                render();
+            }
+        };
+
+        window.deleteTask = (e, taskId) => {
+            e.stopPropagation(); // Stop bubbling to toggle
+            if (confirm("确定要删除这个任务吗？")) {
+                taskList = taskList.filter(t => t.id !== taskId);
+                saveToCloud();
+                render();
+            }
+        };
+
+        // --- CLOUD SYNC ---
+
         async function fetchCloud() {
             const statusEl = document.getElementById('sync-status');
             statusEl.innerText = "⏳ 连接云端中...";
             statusEl.classList.add('sync-active');
 
             try {
-                const query = new AV.Query('ChecklistState');
+                const query = new AV.Query('TieYixiangChecklistPublic');
                 query.equalTo('syncId', SYNC_ID);
                 const results = await query.find();
 
                 if (results.length > 0) {
                     dbObject = results[0];
-                    globalState = dbObject.get('data') || {};
-                    applyStateToDOM(globalState);
-
-                    statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 已同步 LeanCloud';
+                    const cloudData = dbObject.get('taskList');
+                    if (cloudData && Array.isArray(cloudData)) {
+                        taskList = cloudData;
+                    } else {
+                        // Fallback/Migration if data structure is weird
+                        taskList = DEFAULT_TASKS;
+                    }
+                    render();
+                    statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 已同步';
                     setTimeout(() => statusEl.classList.remove('sync-active'), 3000);
                 } else {
-                    console.log("Creating new object...");
-                    const ChecklistState = AV.Object.extend('ChecklistState');
-                    dbObject = new ChecklistState();
+                    console.log("Initialize New DB...");
+                    const ClassInfo = AV.Object.extend('TieYixiangChecklistPublic');
+                    dbObject = new ClassInfo();
                     dbObject.set('syncId', SYNC_ID);
-                    dbObject.set('data', {});
 
-                    // CRITICAL: Set Permissions to Public
+                    // Initial Seed
+                    taskList = [...DEFAULT_TASKS];
+                    dbObject.set('taskList', taskList);
+
+                    // ACL
                     const acl = new AV.ACL();
                     acl.setPublicReadAccess(true);
                     acl.setPublicWriteAccess(true);
                     dbObject.setACL(acl);
 
                     await dbObject.save();
-
+                    render();
                     statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 初始化完成';
                 }
             } catch (error) {
-                console.error("Cloud Error:", error);
+                console.error("Cloud Error", error);
                 statusEl.style.background = "rgba(255, 59, 48, 0.9)";
-                statusEl.innerHTML = "❌ <span style='cursor:pointer; text-decoration:underline;' onclick=\"document.getElementById('settings-panel').style.display='flex'\">连接失败:配置错误</span>";
-
-                // If Auth error, maybe show settings automatically?
-                if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-                    // document.getElementById('settings-panel').style.display = 'flex';
-                }
-
+                statusEl.innerHTML = "❌ 配置错误/断网";
                 // Fallback to local
-                globalState = JSON.parse(localStorage.getItem('tie_local_backup')) || {};
-                applyStateToDOM(globalState);
-            }
-        }
-
-        // 2. Apply State to UI
-        function applyStateToDOM(state) {
-            const items = document.querySelectorAll('.task-item');
-            let completedCount = 0;
-
-            items.forEach(item => {
-                const onclickStr = item.getAttribute('onclick');
-                const idMatch = onclickStr.match(/'([^']+)'/);
-                if (idMatch && idMatch[1]) {
-                    const taskId = idMatch[1];
-                    if (state[taskId]) {
-                        item.classList.add('completed');
-                        completedCount++;
-                    } else {
-                        item.classList.remove('completed');
-                    }
+                const localBackup = localStorage.getItem('tie_tasks_backup');
+                if (localBackup) {
+                    taskList = JSON.parse(localBackup);
+                    render();
+                } else {
+                    taskList = DEFAULT_TASKS;
+                    render();
                 }
-            });
-            updateProgress(completedCount, items.length);
+            }
         }
 
-        // 3. Toggle & Save
-        window.toggleTask = async (el, taskId) => {
-            el.classList.toggle('completed');
+        async function saveToCloud() {
+            // Optimistic UI updates happen before this
+            const statusEl = document.getElementById('sync-status');
+            statusEl.style.background = "rgba(0,0,0,0.8)";
+            statusEl.innerHTML = "⏳ 保存中...";
+            statusEl.classList.add('sync-active');
 
-            if (el.classList.contains('completed')) {
-                globalState[taskId] = true;
-            } else {
-                delete globalState[taskId];
-            }
-
-            const items = document.querySelectorAll('.task-item');
-            const done = document.querySelectorAll('.task-item.completed').length;
-            updateProgress(done, items.length);
-
-            localStorage.setItem('tie_local_backup', JSON.stringify(globalState));
+            // Local backup
+            localStorage.setItem('tie_tasks_backup', JSON.stringify(taskList));
 
             if (dbObject) {
-                const statusEl = document.getElementById('sync-status');
-                statusEl.style.background = "rgba(0,0,0,0.8)";
-                statusEl.innerHTML = "⏳ 保存中...";
-                statusEl.classList.add('sync-active');
-
-                dbObject.set('data', globalState);
+                dbObject.set('taskList', taskList);
                 try {
                     await dbObject.save();
                     statusEl.innerHTML = '<span style="width:6px; height:6px; background:#34C759; border-radius:50%;"></span> 保存成功';
                     setTimeout(() => statusEl.classList.remove('sync-active'), 2000);
                 } catch (e) {
+                    console.error(e);
                     statusEl.style.background = "rgba(255, 59, 48, 0.9)";
-                    statusEl.innerText = "❌保存失败";
+                    statusEl.innerText = "❌ 保存失败";
                 }
-            } else {
-                fetchCloud();
             }
-
-            if (window.navigator && window.navigator.vibrate) {
-                window.navigator.vibrate(50);
-            }
-        };
-
-        function updateProgress(done, total) {
-            const pct = Math.round((done / total) * 100);
-            document.getElementById('total-progress').style.width = pct + '%';
-            document.getElementById('progress-text').innerText = pct + '%';
         }
 
-        // Init
-        fetchCloud();
-
+        // Live Poll (Simple Sync)
         setInterval(async () => {
             if (dbObject) {
                 try {
                     await dbObject.fetch();
-                    const newData = dbObject.get('data');
-                    if (JSON.stringify(newData) !== JSON.stringify(globalState)) {
-                        globalState = newData;
-                        applyStateToDOM(globalState);
+                    const serverTasks = dbObject.get('taskList');
+                    // Simple JSON comparison to see if we need to re-render
+                    // Note: This overrides local unsaved changes if collision entails, 
+                    // but for a simple shared list this Last-Write-Wins pull is acceptable.
+                    if (JSON.stringify(serverTasks) !== JSON.stringify(taskList)) {
+                        console.log("Remote update detected!");
+                        taskList = serverTasks;
+                        render();
                     }
                 } catch (e) { }
             }
-        }, 5000);
+        }, 3000); // 3s polling
+
+        initApp();
 
     </script>
 </body>
