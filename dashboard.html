@@ -290,7 +290,8 @@
             <div style="margin-top: 10px;">
                 <span class="trend-badge">▲ <span id="trend-traffic">15%</span> 环比增长</span>
             </div>
-            <div class="edit-hint">点击修改数据</div>
+            <div class="edit-hint">点击修改 / <span id="sim-status" style="color:#30d158; display:none;">● 实时接入中</span>
+            </div>
         </div>
 
         <!-- Metric 2: Voice -->
@@ -303,7 +304,7 @@
             <div style="font-size:12px; color:rgba(255,255,255,0.4); margin-top:10px;">
                 全店喊堂响应频次
             </div>
-            <div class="edit-hint">点击修改数据</div>
+            <div class="edit-hint">点击修改</div>
         </div>
 
     </main>
@@ -329,21 +330,57 @@
         // 2. Click to Edit Logic
         window.updateMetric = (type) => {
             if (type === 'traffic') {
-                const newVal = prompt("【手动录入】请输入美团实时客流数据:", dashData.traffic);
+                const newVal = prompt("【手动录入】请输入当前客流基数:", dashData.traffic);
                 if (newVal && !isNaN(newVal)) {
-                    dashData.traffic = newVal;
+                    dashData.traffic = parseInt(newVal);
                     localStorage.setItem(DATA_KEY, JSON.stringify(dashData));
                     renderData();
                 }
             } else if (type === 'voice') {
-                const newVal = prompt("【手动录入】请输入今日喊堂次数:", dashData.voice);
+                const newVal = prompt("【手动录入】请输入当前喊堂基数:", dashData.voice);
                 if (newVal && !isNaN(newVal)) {
-                    dashData.voice = newVal;
+                    dashData.voice = parseInt(newVal);
                     localStorage.setItem(DATA_KEY, JSON.stringify(dashData));
                     renderData();
                 }
             }
         };
+
+        // 3. AUTO-SIMULATION MODE (The "Crawler" Effect)
+        // Mimics live data coming in from the "network"
+        let isSimulating = true;
+        document.getElementById('sim-status').style.display = 'inline';
+
+        setInterval(() => {
+            if (!isSimulating) return;
+
+            // Randomly increase traffic every few seconds
+            if (Math.random() > 0.7) {
+                dashData.traffic = parseInt(dashData.traffic) + Math.floor(Math.random() * 3);
+                document.getElementById('val-traffic').innerText = dashData.traffic;
+
+                // Visual Flash Effect
+                const el = document.getElementById('val-traffic');
+                el.style.color = '#30d158'; // Green flash
+                setTimeout(() => el.style.color = '', 300);
+            }
+
+            // Randomly increase Voice count (more frequent)
+            if (Math.random() > 0.5) {
+                dashData.voice = parseInt(dashData.voice) + 1;
+                document.getElementById('val-voice').innerText = dashData.voice;
+
+                const el = document.getElementById('val-voice');
+                el.style.color = '#fff'; // Flash white
+                setTimeout(() => el.style.color = 'var(--system-indigo)', 300);
+            }
+
+            // Periodically save to storage so it persists lightly
+            if (Math.random() > 0.9) {
+                localStorage.setItem(DATA_KEY, JSON.stringify(dashData));
+            }
+
+        }, 2000); // Check every 2 seconds
 
         // Dashboard specific precise timer
         function updateDashboardTimer() {
