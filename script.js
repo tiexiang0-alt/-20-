@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function getSharedDeadline() {
         try {
+            if (typeof AV === 'undefined') throw new Error("SDK not loaded");
+
+            const timerEl = document.getElementById('countdown-timer');
+            if (timerEl) timerEl.innerText = "⏳ 正在同步云端...";
+
             const query = new AV.Query('TieYixiangGlobalSettings');
             query.equalTo('settingVersion', 3); // Force fresh sync for Beijing Time fix
             const results = await query.find();
@@ -22,6 +27,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (results.length > 0) {
                 const settings = results[0];
                 const savedStart = settings.get('campaignStartTime');
+                if (timerEl) {
+                    // Flash success briefly or just start
+                    const dateStr = savedStart.toLocaleDateString();
+                    console.log(`Synced to: ${dateStr}`);
+                }
                 return new Date(savedStart.getTime() + (20 * 24 * 60 * 60 * 1000));
             } else {
                 console.log("Initializing Global Deadline (Beijing Time v3)...");
@@ -51,6 +61,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (e) {
             console.error("Countdown Sync Error", e);
+            const timerEl = document.getElementById('countdown-timer');
+            if (timerEl) {
+                timerEl.innerHTML = `<span style="font-size:14px; color:red;">云同步失败: ${e.message || "Network"}</span>`;
+                // Wait 3s then fallback
+                await new Promise(r => setTimeout(r, 3000));
+            }
+
             // Fallback: Attempt local Beijing Midnight calculation
             const now = new Date();
             const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000);
